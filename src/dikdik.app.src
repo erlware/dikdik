@@ -1,0 +1,13 @@
+%% -*- erlang -*-
+{application, dikdik,
+ [{description, "Erlang interface for Heroku's PostgreSQL"},
+  {vsn, "0.0.1"},
+  {registered,[dikdik_sup]},
+  {applications, [kernel
+                  ,stdlib
+                  ,jsx
+                  ,jesse
+                  ,pgsql
+                  ,lager]},
+  {mod, {dikdik_app,[]}},
+  {start_phases, []}]}.
