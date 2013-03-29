@@ -50,29 +50,31 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
-
-%% Result = {ok,Pid} | ignore | {error,Error}
-%%  Pid = pid()
-%%  Error = {already_started,Pid} | term()
+-spec start_link(Server::binary(), Port::integer(), Opts::list(), DB::binary()) -> {ok, Pid::pid()} | ignore | {error, Error :: term() | {already_started, Pid::pid()}}.
 start_link(Server, Port, Opts, DB) ->
     gen_server:start_link(?MODULE, [Server, Port, Opts, DB], []).
 
+%% Return all documents in database
 -spec all(PID::pid()) -> [jsx:json_term()].
 all(PID) ->
     gen_server:call(PID, all).
 
+%% Return all documents containing Key/Value pair
 -spec all_key(PID::pid(), {Key::binary(), Value::binary()}) -> [jsx:json_term()].
 all_key(PID, Key) ->
     gen_server:call(PID, {all_key, Key}).
 
+%% Find document with given ID, assumes ID is unique
 -spec find(PID::pid(), ID::binary()) -> jsx:json_term().
 find(PID, ID) ->
     gen_server:call(PID, {find, ID}).
 
+%% Create new document with ID, assumes ID does not currently exist
 -spec create(PID::pid(), Doc::jsx:json_term()) -> ok | {error, Error::binary()}.
 create(PID, Doc) ->
     gen_server:call(PID, {create, Doc}).
 
+%% Update an already existing document at ID with new document
 -spec update(PID::pid(), ID::binary(), Doc::jsx:json_term()) -> ok | {error, Error::binary()}.
 update(PID, ID, Doc) ->
     gen_server:call(PID, {update, ID, Doc}).
