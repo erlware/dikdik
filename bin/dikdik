@@ -1,0 +1,10 @@
+#!/bin/bash
+
+UNAME=`uname`
+if [[ $UNAME = "Darwin" ]]; then
+  HOSTNAME=`hostname`
+else
+  HOSTNAME=`hostname --fqdn`
+fi
+
+erl +K true -pa ebin -env ERL_LIBS deps -name dikdik@$HOSTNAME -s dikdik_app
