@@ -20,8 +20,8 @@ simple_query(Pid, Query) ->
 extended_query(Pid, Stmt, Params) ->
     gen_server:call(Pid, {extended_query, Stmt, Params}).
 
-init(Args) ->
-    Conn = {pgsql_connection, Pid} = pgsql_connection:open(Args),
+init(Options) ->
+    Conn = {pgsql_connection, Pid} = pgsql_connection:open(Options),
     link(Pid),
     {ok, #state{conn=Conn}}.
 

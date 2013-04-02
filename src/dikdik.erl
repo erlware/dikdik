@@ -26,7 +26,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/4,
+-export([start_link/0,
          all/1,
          all_key/2,
          find/2,
@@ -41,7 +41,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {db}).
+-record(state, {}).
 
 %%%===================================================================
 %%% Public Types
@@ -50,9 +50,9 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
--spec start_link(Server::binary(), Port::integer(), Opts::list(), DB::binary()) -> {ok, Pid::pid()} | ignore | {error, Error :: term() | {already_started, Pid::pid()}}.
-start_link(Server, Port, Opts, DB) ->
-    gen_server:start_link(?MODULE, [Server, Port, Opts, DB], []).
+-spec start_link() -> {ok, Pid::pid()} | ignore | {error, Error :: term() | {already_started, Pid::pid()}}.
+start_link() ->
+    gen_server:start_link(?MODULE, [], []).
 
 %% Return all documents in database
 -spec all(PID::pid()) -> [jsx:json_term()].
@@ -87,34 +87,21 @@ terminate(PID) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-%% **TODO Change to connect to PostgreSQL
 %% @private
-init([Server, Port, Opts, DB]) ->
-    CouchServer = couchbeam:server_connection(Server, Port, "", Opts),
-    {ok, CouchDB} = couchbeam:open_db(CouchServer, DB),
-    {ok, #state{db=CouchDB}}.
+init([]) ->
+    {ok, #state{}}.
 
 %% @private
-handle_call(all, _From, #state{db=DB}=State) ->
-    Docs = get_docs(DB, [include_docs]),
-    {reply, Docs, State};
-handle_call({all_key, Key}, _From, #state{db=DB}=State) ->
-    Docs = get_docs(DB, [include_docs]),
-    Docs2 = filter_by_key(Docs, Key),
-    {reply, Docs2, State};
-handle_call({find, ID}, _From, #state{db=DB}=State) ->
-    Doc = get_docs(DB, [{key, ID}, include_docs]),
-    {reply, Doc, State};
-handle_call({create, Doc}, _From, #state{db=DB}=State) ->
-    {ok, Doc1} = couchbeam:save_doc(DB, Doc),
-    {reply, Doc1, State};
-handle_call({update, IDBinary, NewDoc}, _From, #state{db=DB}=State) ->
-    {ok, Doc} = couchbeam:open_doc(DB, IDBinary),
-    NewDoc2 = couchbeam_doc:set_value(<<"_id">>, IDBinary, {NewDoc}),
-    Rev = couchbeam_doc:get_rev(Doc),
-    NewDoc3 = couchbeam_doc:set_value(<<"_rev">>, Rev, NewDoc2),
-    {ok, Doc1} = couchbeam:save_doc(DB, NewDoc3),
-    {reply, Doc1, State};
+handle_call(all, _From, State) ->
+    {reply, [], State};
+handle_call({all_key, _Key}, _From, State) ->
+    {reply, [], State};
+handle_call({find, _ID}, _From, State) ->
+    {reply, <<>>, State};
+handle_call({create, _Doc}, _From, State) ->
+    {reply, <<>>, State};
+handle_call({update, _IDBinary, _NewDoc}, _From, State) ->
+    {reply, <<>>, State};
 handle_call(terminate, _From, State) ->
     {stop, normal, State}.
 
@@ -138,22 +125,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-get_docs(DB, Options) ->
-    case couchbeam_view:fetch(DB, 'all_docs', Options) of
-        {ok, Results} ->
-            Results;
-        _ ->
-            error
-    end.
-
-filter_by_key(Docs, Key) ->
-    filter_by_key(Docs, Key, []).
-filter_by_key([], _Key, R) ->
-    lists:reverse(R);
-filter_by_key([Doc|T], {Key, Value}, R) ->
-    case lists:keyfind(Key, 1, Doc) of
-        {Key, Value}  ->
-            filter_by_key(T, {Key, Value}, [Doc|R]);
-        _ -> filter_by_key(T, {Key, Value}, R)
-    end.
