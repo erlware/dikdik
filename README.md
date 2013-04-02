@@ -1,3 +1,5 @@
+![Dikdik](https://github.com/tsloughter/dikdik/raw/master/dikdik.jpg)
+
 README
 ======
 Authors: Tristan Sloughter <tristan.sloughter@gmail.com>
