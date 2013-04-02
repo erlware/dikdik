@@ -1,0 +1,1 @@
+-define(POOL, dikdik_pool).

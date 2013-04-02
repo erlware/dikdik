@@ -24,11 +24,11 @@
 -module(dikdik).
 
 %% API
--export([all/0,
-         all_key/1,
-         find/1,
-         create/1,
-         update/2]).
+-export([all/0
+        ,all_key/1
+        ,find/1
+        ,create/1
+        ,update/2]).
 
 %%%===================================================================
 %%% API

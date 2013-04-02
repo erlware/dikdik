@@ -33,6 +33,8 @@
 %% Supervisor callbacks
 -export([init/1]).
 
+-include("dikdik.hrl").
+
 -define(SERVER, ?MODULE).
 
 %%%===================================================================
@@ -66,7 +68,7 @@ init(_) ->
     PoolSize = list_to_integer(dikdik_app:config(db_pool_size)),
 
     {ok, {{one_for_one, 1000, 3600}
-          ,[poolboy:child_spec(dikdik_pool, [{name, {local, dikdik_pool}}
+         ,[poolboy:child_spec(?POOL, [{name, {local, dikdik_pool}}
                                            ,{worker_module, dikdik_db_worker}
                                            ,{size, PoolSize}
                                            ,{max_overflow, Overflow}], [
