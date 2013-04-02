@@ -30,7 +30,7 @@ do(Fun, true) ->
     C = poolboy:checkout(?POOL, true, 5000),
     case dikdik_db_worker:simple_query(C, "BEGIN") of
         {'begin',[]} ->
-            try 
+            try
                 Fun(C)
             after
                 {rollback,[]} = dikdik_db_worker:simple_query(C, "ROLLBACK"),
@@ -38,5 +38,4 @@ do(Fun, true) ->
             end;
         _ ->
             ok = poolboy:checkin(?POOL, C)
-    end.    
-
+    end.

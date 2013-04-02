@@ -41,9 +41,9 @@
 start() ->
     application:set_env(lager, handlers, {handlers, [
                                                     {lager_console_backend, [info]}
-                                                    ]}),    
+                                                    ]}),
 
-    cache_os_envvars(),    
+    cache_os_envvars(),
     start_deps(dikdik, permanent).
 
 %% @private
