@@ -48,7 +48,9 @@ all_key(_Key) ->
 %% Find document with given Id, assumes Id is unique
 -spec find(Table::binary(), Id::binary()) -> jsx:json_term().
 find(Table, Id) ->
-    dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary, " WHERE id=$1">>, [Id]).
+    {{select, _Rows}, [{{array, Results}}]} =
+        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary, " WHERE id=$1">>, [Id]),
+    jsx:encode(array_to_erl_json(Results)).       
 
 %% Create new table named Table
 -spec create_table(Table::binary()) -> ok | {error, Error::binary()}.
@@ -63,8 +65,17 @@ create(Table, Doc) ->
                 << <<", ", K/binary, " => ", (jsx:encode(V))/binary >> || {K, V}  <- T >>/binary >>,
     dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (data) VALUES ('", Values/binary,"')">>).
 
-
 %% Update an already existing document at Id with new document
 -spec update(Id::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
 update(_Id, _Doc) ->
     ok.
+
+%%% Internal functions
+
+array_to_erl_json(Array) ->
+    array_to_erl_json(Array, []).
+
+array_to_erl_json([], Acc) ->
+    Acc;
+array_to_erl_json([K, V | T], Acc) ->
+    array_to_erl_json(T, [{K, jsx:decode(V)} | Acc]).
