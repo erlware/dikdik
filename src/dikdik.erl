@@ -27,6 +27,7 @@
 -export([all/0
         ,all_key/1
         ,find/1
+        ,create_table/1
         ,create/2
         ,update/2]).
 
@@ -48,6 +49,11 @@ all_key(_Key) ->
 -spec find(Id::binary()) -> jsx:json_term().
 find(_Id) ->
     <<>>.
+
+%% Create new table named Table
+-spec create_table(Table::binary()) -> ok | {error, Error::binary()}.
+create_table(Table) when is_binary(Table) ->
+    dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id serial PRIMARY KEY, name varchar UNIQUE, data hstore)">>).
 
 %% Create new document with Id, assumes Id does not currently exist
 -spec create(Table::binary(), Doc::jsx:json_term()) -> ok | {error, Error::binary()}.
