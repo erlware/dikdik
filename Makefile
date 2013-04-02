@@ -49,8 +49,7 @@ shell: compile
 # rebuilt). However, eunit runs the tests, which probably
 # fails (thats probably why You want them in the shell). This
 # runs eunit but tells make to ignore the result.
-	- @$(REBAR) skip_deps=true eunit
-	@$(ERL) $(ERLFLAGS)
+	./bin/dikdik
 
 clean: $(REBAR)
 	$(REBAR) skip_deps=true clean
