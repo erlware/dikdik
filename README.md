@@ -29,8 +29,14 @@ $ make shell
 Erlang R15B03 (erts-5.9.3.1) [source] [smp:4:4] [async-threads:30] [hipe] [kernel-poll:true]
 
 Eshell V5.9.3.1  (abort with ^G)
-1> dikdik:create_table(<<"test">>).
+(dikdik@five9s-MacBook-Air-2.local)1> dikdik:create_table(<<"wutang">>).
 {{create,table},[]}
+(dikdik@five9s-MacBook-Air-2.local)2> dikdik:create(<<"wutang">>, <<"doc1">>, <<"{\"type\":{\"test\":\"testmore\"},\"name\":5}">>).
+{{insert,0,1},[]}
+(dikdik@five9s-MacBook-Air-2.local)3> dikdik:find(<<"wutang">>, 1).
+<<"{\"type\":{\"test\":\"testmore\"},\"name\":5}">>
+(dikdik@five9s-MacBook-Air-2.local)4> dikdik:find(<<"wutang">>, <<"doc1">>).
+<<"{\"type\":{\"test\":\"testmore\"},\"name\":5}">>
 ```
 
 Examples
