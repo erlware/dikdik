@@ -33,9 +33,7 @@ Eshell V5.9.3.1  (abort with ^G)
 {{create,table},[]}
 (dikdik@five9s-MacBook-Air-2.local)2> dikdik:create(<<"wutang">>, <<"doc1">>, <<"{\"type\":{\"test\":\"testmore\"},\"name\":5}">>).
 {{insert,0,1},[]}
-(dikdik@five9s-MacBook-Air-2.local)3> dikdik:find(<<"wutang">>, 1).
-<<"{\"type\":{\"test\":\"testmore\"},\"name\":5}">>
-(dikdik@five9s-MacBook-Air-2.local)4> dikdik:find(<<"wutang">>, <<"doc1">>).
+(dikdik@five9s-MacBook-Air-2.local)3> dikdik:find(<<"wutang">>, <<"doc1">>).
 <<"{\"type\":{\"test\":\"testmore\"},\"name\":5}">>
 ```
 
