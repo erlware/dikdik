@@ -26,8 +26,8 @@
 %% API
 -export([all/0
         ,all_key/1
-        ,find/1
         ,create_table/1
+        ,find/2
         ,create/2
         ,update/2]).
 
@@ -46,9 +46,11 @@ all_key(_Key) ->
     [].
 
 %% Find document with given Id, assumes Id is unique
--spec find(Id::binary()) -> jsx:json_term().
-find(_Id) ->
-    <<>>.
+-spec find(Table::binary(), Id::binary()) -> jsx:json_term().
+find(Table, Id) ->
+    {{select, _Rows}, [{{array, Results}}]} =
+        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary, " WHERE id=$1">>, [Id]),
+    jsx:encode(array_to_erl_json(Results)).       
 
 %% Create new table named Table
 -spec create_table(Table::binary()) -> ok | {error, Error::binary()}.
@@ -56,13 +58,24 @@ create_table(Table) when is_binary(Table) ->
     dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id serial PRIMARY KEY, name varchar UNIQUE, data hstore)">>).
 
 %% Create new document with Id, assumes Id does not currently exist
--spec create(Table::binary(), Doc::jsx:json_term()) -> ok | {error, Error::binary()}.
+-spec create(Table::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
 create(Table, Doc) ->
-    Values = << <<K/binary, <<" => ">>/binary, (jsx:encode(V))/binary>> || {K, V}  <- jsx:decode(Doc) >>,
+    [{K1, V1} | T] = jsx:decode(Doc),
+    Values = << <<K1/binary, " => ", (jsx:encode(V1))/binary>>/binary,
+                << <<", ", K/binary, " => ", (jsx:encode(V))/binary >> || {K, V}  <- T >>/binary >>,
     dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (data) VALUES ('", Values/binary,"')">>).
 
-
 %% Update an already existing document at Id with new document
--spec update(Id::binary(), Doc::jsx:json_term()) -> ok | {error, Error::binary()}.
+-spec update(Id::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
 update(_Id, _Doc) ->
     ok.
+
+%%% Internal functions
+
+array_to_erl_json(Array) ->
+    array_to_erl_json(Array, []).
+
+array_to_erl_json([], Acc) ->
+    Acc;
+array_to_erl_json([K, V | T], Acc) ->
+    array_to_erl_json(T, [{K, jsx:decode(V)} | Acc]).
