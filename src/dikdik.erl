@@ -27,7 +27,7 @@
 -export([all/0
         ,all_key/1
         ,find/1
-        ,create/1
+        ,create/2
         ,update/2]).
 
 %%%===================================================================
@@ -50,11 +50,10 @@ find(_Id) ->
     <<>>.
 
 %% Create new document with Id, assumes Id does not currently exist
--spec create(Doc::jsx:json_term()) -> ok | {error, Error::binary()}.
-create(Doc) ->
-    JSONTerms = jsx:decode(Doc),
-    Values = << <<K/binary, <<" => ">>/binary, (jsx:encode(V))/binary>> || {K, V}  <- JSONTerms >>,
-    dikdik_db:simple_query(<<"INSERT INTO dikdik (data) VALUES ('", Values/binary,"')">>).
+-spec create(Table::binary(), Doc::jsx:json_term()) -> ok | {error, Error::binary()}.
+create(Table, Doc) ->
+    Values = << <<K/binary, <<" => ">>/binary, (jsx:encode(V))/binary>> || {K, V}  <- jsx:decode(Doc) >>,
+    dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (data) VALUES ('", Values/binary,"')">>).
 
 
 %% Update an already existing document at Id with new document
