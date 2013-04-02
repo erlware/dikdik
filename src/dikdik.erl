@@ -24,7 +24,7 @@
 -module(dikdik).
 
 %% API
--export([all/0
+-export([all/1
         ,match/2
         ,new/1
         ,lookup/2
@@ -35,10 +35,12 @@
 %%% API
 %%%===================================================================
 
-%% Return all documents in database
--spec all() -> [jsx:json_term()].
-all() ->
-    [].
+%% Return all documents in Table
+-spec all(Table::binary()) -> [jsx:json_text()].
+all(Table) when is_binary(Table) ->
+    {{select, _Rows}, Results} =
+        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary>>, []),
+    [jsx:encode(array_to_erl_json(X)) || {{array, X}} <- Results].
 
 %% Return all documents containing Key/Value pairs
 -spec match(Table::binary(), Pairs::[{Key::binary(), Value::binary()}]) -> [jsx:json_text()].
