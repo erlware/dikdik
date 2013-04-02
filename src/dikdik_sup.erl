@@ -33,6 +33,8 @@
 %% Supervisor callbacks
 -export([init/1]).
 
+-include("dikdik.hrl").
+
 -define(SERVER, ?MODULE).
 
 %%%===================================================================
@@ -58,34 +60,25 @@ terminate_child(PID) ->
 -spec init(list()) -> {ok, {SupFlags::any(), [ChildSpec::any()]}} |
                        ignore | {error, Reason::any()}.
 init(_) ->
-    RestartStrategy = simple_one_for_one,
-    MaxRestarts = 0,
-    MaxSecondsBetweenRestarts = 1,
+    Url = dikdik_app:config(db_url),
+    {ok, {_Scheme, UserInfo, Host, Port, "/"++DBName, _Query}} = parse(Url),
+    [Username, Password] = string:tokens(UserInfo, ":"),
 
-    SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
+    Overflow = list_to_integer(dikdik_app:config(db_max_overflow)),
+    PoolSize = list_to_integer(dikdik_app:config(db_pool_size)),
 
-    Restart = temporary,
-    Shutdown = 2000,
-    Type = worker,
-
-    %% **TODO change for postgres..
-    Url = os:getenv("CLOUDANT_URL"),
-    case Url of
-         false ->
-            {ok, Server} = application:get_env(server),
-            {ok, Port} = application:get_env(port),
-            Opts = [];
-         _ ->
-           {ok, {_Scheme, UserInfo, Server, _Port, "/"++_DBName, _Query}} = parse(Url),
-           [Username, Password] = string:tokens(UserInfo, ":"),
-           Port = 443,
-           Opts = [{is_ssl, true}, {ssl_options, []}, {basic_auth, {Username, Password}}]
-    end,
-
-    AChild = {dikdik, {dikdik, start_link, [Server, Port, Opts]},
-              Restart, Shutdown, Type, [dikdik]},
-
-    {ok, {SupFlags, [AChild]}}.
+    {ok, {{one_for_one, 1000, 3600}
+         ,[poolboy:child_spec(?POOL, [{name, {local, dikdik_pool}}
+                                           ,{worker_module, dikdik_db_worker}
+                                           ,{size, PoolSize}
+                                           ,{max_overflow, Overflow}], [
+                                                                       {host, Host}
+                                                                       ,{database, DBName}
+                                                                       ,{port, Port}
+                                                                       ,{user, Username}
+                                                                       ,{password, Password}
+                                                                       ,{ssl, true}
+                                                                       ])]}}.
 
 %%%===================================================================
 %%% Internal functions

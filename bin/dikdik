@@ -1,0 +1,22 @@
+#!/bin/bash
+
+UNAME=`uname`
+if [[ $UNAME = "Darwin" ]]; then
+  HOSTNAME=`hostname`
+else
+  HOSTNAME=`hostname --fqdn`
+fi
+
+if [ -z $DATABASE_URL ]; then
+    export DATABASE_URL=postgres://localhost:5432/dikdik
+fi
+
+if [ -z $DB_POOL_SIZE ]; then
+    export DB_POOL_SIZE=10
+fi
+
+if [ -z $DB_MAX_OVERFLOW ]; then
+    export DB_MAX_OVERFLOW=10
+fi
+
+erl +K true -pa ebin -env ERL_LIBS deps -name dikdik@$HOSTNAME -s dikdik_app

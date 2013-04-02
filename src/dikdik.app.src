@@ -4,10 +4,13 @@
   {vsn, "0.0.1"},
   {registered,[dikdik_sup]},
   {applications, [kernel
-                  ,stdlib
-                  ,jsx
-                  ,jesse
-                  ,pgsql
-                  ,lager]},
+                 ,stdlib
+                 ,sasl
+                 ,lager
+                 ,ssl
+                 ,jsx
+                 ,jesse
+                 ,pgsql
+                 ,poolboy]},
   {mod, {dikdik_app,[]}},
   {start_phases, []}]}.
