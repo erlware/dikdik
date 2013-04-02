@@ -45,11 +45,10 @@ all() ->
 %% Return all documents containing Key/Value pair
 -spec all_key(Table::binary(), {Key::binary(), Value::binary()}) -> [jsx:json_text()].
 all_key(Table, {Key, Value}) ->
-    Value2 = encode_and_escape(Value),
-    {{select, _Rows}, [{{array, Results}}]} =
+    {{select, _Rows}, Results} =
         dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary,
-                                   " WHERE data->'$1'=$2">>, [Key, Value2]),
-    jsx:encode(array_to_erl_json(Results)).
+                                   " WHERE data->$1=$2">>, [Key, jsx:encode(Value)]),
+    jsx:encode([array_to_erl_json(X) || {{array, X}} <- Results]).
 
 %% Find document with given Id, assumes Id is unique
 -spec find(Table::binary(), Id :: binary()) -> jsx:json_text().
