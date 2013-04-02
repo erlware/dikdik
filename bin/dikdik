@@ -12,11 +12,11 @@ if [ -z $DATABASE_URL ]; then
 fi
 
 if [ -z $DB_POOL_SIZE ]; then
-    export DB_POOL_SIZE=10
+    export DB_POOL_SIZE=5
 fi
 
 if [ -z $DB_MAX_OVERFLOW ]; then
-    export DB_MAX_OVERFLOW=10
+    export DB_MAX_OVERFLOW=5
 fi
 
 erl +K true -pa ebin -env ERL_LIBS deps -name dikdik@$HOSTNAME -s dikdik_app
