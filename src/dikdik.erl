@@ -25,7 +25,7 @@
 
 %% API
 -export([all/0
-        ,all_key/1
+        ,all_key/2
         ,create_table/1
         ,find/2
         ,create/2
@@ -41,16 +41,22 @@
 all() ->
     [].
 
+%WHERE attributes->'edition'= 'ebook'
 %% Return all documents containing Key/Value pair
--spec all_key({Key::binary(), Value::binary()}) -> [jsx:json_text()].
-all_key(_Key) ->
-    [].
+-spec all_key(Table::binary(), {Key::binary(), Value::binary()}) -> [jsx:json_text()].
+all_key(Table, {Key, Value}) ->
+    Value2 = encode_and_escape(Value),
+    {{select, _Rows}, [{{array, Results}}]} =
+        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary,
+                                   " WHERE data->'$1'=$2">>, [Key, Value2]),
+    jsx:encode(array_to_erl_json(Results)).
 
 %% Find document with given Id, assumes Id is unique
 -spec find(Table::binary(), Id :: binary()) -> jsx:json_text().
 find(Table, Id) when is_binary(Id) ->
     {{select, _Rows}, [{{array, Results}}]} =
-        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary, " WHERE id=$1">>, [Id]),
+        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary,
+                                   " WHERE id=$1">>, [Id]),
     jsx:encode(array_to_erl_json(Results)).
 
 %% Create new table named Table
