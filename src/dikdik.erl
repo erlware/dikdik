@@ -28,6 +28,7 @@
         ,all_key/1
         ,create_table/1
         ,find/2
+        ,create/2
         ,create/3
         ,update/2]).
 
@@ -46,28 +47,27 @@ all_key(_Key) ->
     [].
 
 %% Find document with given Id, assumes Id is unique
--spec find(Table::binary(), Id :: integer() | binary()) -> jsx:json_text().
-find(Table, Id) when is_integer(Id) ->
-    {{select, _Rows}, [{{array, Results}}]} =
-        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary, " WHERE id=$1">>, [Id]),
-    jsx:encode(array_to_erl_json(Results));
+-spec find(Table::binary(), Id :: binary()) -> jsx:json_text().
 find(Table, Id) when is_binary(Id) ->
     {{select, _Rows}, [{{array, Results}}]} =
-        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary, " WHERE name=$1">>, [Id]),
+        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary, " WHERE id=$1">>, [Id]),
     jsx:encode(array_to_erl_json(Results)).
 
 %% Create new table named Table
 -spec create_table(Table::binary()) -> ok | {error, Error::binary()}.
 create_table(Table) when is_binary(Table) ->
-    dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id serial PRIMARY KEY, name varchar UNIQUE, data hstore)">>).
+    dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>).
 
 %% Create new document with Name, assumes Name does not currently exist
--spec create(Table::binary(), Name::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
-create(Table, Name, Doc) ->
-    [{K1, V1} | T] = jsx:decode(Doc),
-    Values = << <<K1/binary, " => ", (jsx:encode(V1))/binary>>/binary,
-                << <<", ", K/binary, " => ", (jsx:encode(V))/binary >> || {K, V}  <- T >>/binary >>,
-    dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (name, data) VALUES ('", Name/binary, "','", Values/binary,"')">>).
+-spec create(Table::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
+create(Table, Doc) ->
+    Values = to_insert_vals(Doc),
+    dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES (uuid_generate_v4(), '", Values/binary,"')">>).
+
+-spec create(Table::binary(), Key::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
+create(Table, Key, Doc) ->
+    Values = to_insert_vals(Doc),
+    dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES ('", Key/binary, "','", Values/binary,"')">>).
 
 %% Update an already existing document at Id with new document
 -spec update(Id::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
@@ -75,6 +75,14 @@ update(_Id, _Doc) ->
     ok.
 
 %%% Internal functions
+
+to_insert_vals(Doc) ->
+    [{K1, V1} | T] = jsx:decode(Doc),
+    << <<K1/binary, " => ", (encode_and_escape(V1))/binary>>/binary,
+       << <<", ", K/binary, " => \"", (encode_and_escape(V))/binary, "\"" >> || {K, V}  <- T >>/binary >>.
+
+encode_and_escape(B) ->
+    binary:replace(jsx:encode(B), <<"\"">>, <<"\\\"">>, [global]).
 
 array_to_erl_json(Array) ->
     array_to_erl_json(Array, []).
