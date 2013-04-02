@@ -18,7 +18,7 @@ ERLWARE_COMMONS_PLT=$(CURDIR)/.erlware_commons_plt
 
 .PHONY: all compile doc clean test shell distclean pdf get-deps rebuild #dialyzer typer #fail on Travis.
 
-all: compile doc test #dialyzer #fail on travis
+all: deps compile
 
 $(REBAR):
 	wget https://github.com/rebar/rebar/wiki/rebar
@@ -26,12 +26,16 @@ $(REBAR):
 
 get-rebar: $(REBAR)
 
+deps:
+	$(REBAR) get-deps
+	$(REBAR) compile
+
 get-deps: $(REBAR)
 	$(REBAR) get-deps
 	$(REBAR) compile
 
 compile: $(REBAR)
-	$(REBAR) skip_deps=true compile
+	$(REBAR) compile
 
 doc: compile
 	- $(REBAR) skip_deps=true doc
@@ -53,12 +57,12 @@ clean: $(REBAR)
 	- rm -rf $(CURDIR)/doc/*.html
 	- rm -rf $(CURDIR)/doc/*.css
 	- rm -rf $(CURDIR)/doc/*.png
- 
+
 clean-deps: clean
 	rm -rvf $(CURDIR)/deps/*
 	rm -rf $(ERLWARE_COMMONS_PLT).$(ERL_VER)
- 
+
 distclean: clean-deps
 	rm -rf $(CURDIR)/rebar
- 
+
 rebuild: clean-deps get-deps all

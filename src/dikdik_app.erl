@@ -26,16 +26,37 @@
 -behaviour(application).
 
 %% Application callbacks
--export([start/2, stop/1]).
+-export([start/0, start/2, stop/1]).
+
+-export([config/0
+         ,config/1
+         ,config/2
+         ,set_config/2
+        ]).
 
 %%%===================================================================
 %%% Application callbacks
 %%%===================================================================
 
+start() ->
+    application:set_env(lager, handlers, {handlers, [
+                                                    {lager_console_backend, [info]}
+                                                    ]}),    
+
+    cache_os_envvars(),    
+    start_deps(dikdik, permanent).
+
 %% @private
--spec start(normal | {takeover, node()} | {failover, node()},
-            any()) -> {ok, pid()} | {ok, pid(), State::any()} |
-                      {error, Reason::any()}.
+start_deps(App, Type) ->
+    case application:start(App, Type) of
+        ok ->
+            ok;
+        {error, {not_started, Dep}} ->
+            start_deps(Dep, Type),
+            start_deps(App, Type)
+    end.
+
+%% @private
 start(_StartType, _StartArgs) ->
     case dikdik_sup:start_link() of
         {ok, Pid} ->
@@ -53,3 +74,41 @@ stop(_State) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+cache_os_envvars() ->
+    cache_os_envvars([
+                     {db_url, "DATABASE_URL"}
+                     ,{db_pool_size, "DB_POOL_SIZE"}
+                     ,{db_max_overflow, "DB_MAX_OVERFLOW"}
+                     ]).
+
+cache_os_envvars([]) ->
+    ok;
+cache_os_envvars([{Key, OsKey}|Tail]) when is_atom(Key) ->
+    Val =
+        case os:getenv(OsKey) of
+            false -> "";
+            OsVal -> OsVal
+        end,
+    set_config(Key, Val),
+    cache_os_envvars(Tail).
+
+config(Key, Default) when is_atom(Key) ->
+    case application:get_env(dikdik, Key) of
+        undefined -> Default;
+        {ok, Val} -> Val
+    end.
+
+config(Key) when is_atom(Key) ->
+    case application:get_env(dikdik, Key) of
+        undefined -> erlang:error({missing_config, Key});
+        {ok, Val} -> Val
+    end.
+
+config() ->
+    application:get_all_env(dikdik).
+
+set_config(KeyS, Value) when is_list(KeyS) ->
+    set_config(list_to_atom(KeyS), Value);
+set_config(Key, Value) when is_atom(Key) ->
+    application:set_env(dikdik, Key, Value).
