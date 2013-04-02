@@ -25,7 +25,7 @@
 
 %% API
 -export([all/0
-        ,all_key/2
+        ,match/2
         ,new/1
         ,lookup/2
         ,insert/2, insert/3
@@ -40,18 +40,22 @@
 all() ->
     [].
 
-%WHERE attributes->'edition'= 'ebook'
-%% Return all documents containing Key/Value pair
--spec all_key(Table::binary(), {Key::binary(), Value::binary()}) -> [jsx:json_text()].
-all_key(Table, {Key, Value}) ->
+%% Return all documents containing Key/Value pairs
+-spec match(Table::binary(), Pairs::[{Key::binary(), Value::binary()}]) -> [jsx:json_text()].
+match(Table, Pairs)
+  when is_binary(Table),
+       is_list(Pairs)->
+    {WhereStr, WhereList} = build_where(Pairs),
     {{select, _Rows}, Results} =
         dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary,
-                                   " WHERE data->$1=$2">>, [Key, jsx:encode(Value)]),
+                                   WhereStr/binary>>, WhereList),
     [jsx:encode(array_to_erl_json(X)) || {{array, X}} <- Results].
 
 %% Find document with given Id, assumes Id is unique
 -spec lookup(Table::binary(), Id :: binary()) -> jsx:json_text().
-lookup(Table, Id) when is_binary(Id) ->
+lookup(Table, Id)
+  when is_binary(Table),
+       is_binary(Id) ->
     {{select, _Rows}, [{{array, Results}}]} =
         dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary,
                                    " WHERE id=$1">>, [Id]),
@@ -64,12 +68,17 @@ new(Table) when is_binary(Table) ->
 
 %% Create new document with Name, assumes Name does not currently exist
 -spec insert(Table::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
-insert(Table, Doc) ->
+insert(Table, Doc)
+  when is_binary(Table),
+       is_binary(Doc) ->
     Values = to_insert_vals(Doc),
     dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES (uuid_generate_v4(), '", Values/binary,"')">>).
 
 -spec insert(Table::binary(), Key::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
-insert(Table, Key, Doc) ->
+insert(Table, Key, Doc)
+  when is_binary(Table),
+       is_binary(Key),
+       is_binary(Doc) ->
     Values = to_insert_vals(Doc),
     dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES ('", Key/binary, "','", Values/binary,"')">>).
 
@@ -79,6 +88,23 @@ update(_Id, _Doc) ->
     ok.
 
 %%% Internal functions
+
+build_where(Pairs) ->
+    build_where(Pairs, {<<"">>, []}).
+build_where([], {WhereStr, WhereList}) ->
+    {WhereStr, lists:reverse(WhereList)};
+build_where([{K, V} | T], {WhereStr, WhereList}) ->
+    KNum = list_to_binary(integer_to_list(length(WhereList)+1)),
+    VNum = list_to_binary(integer_to_list(length(WhereList)+2)),
+    Str = case KNum of
+              <<"1">> ->
+                  <<" WHERE data->$", KNum/binary, "=$", VNum/binary>>;
+              _KNum ->
+                  <<" AND data->$", KNum/binary, "=$", VNum/binary>>
+          end,
+    NewWhereStr = <<WhereStr/binary, Str/binary>>,
+    NewWhereList = [jsx:encode(V), K | WhereList],
+    build_where(T, {NewWhereStr, NewWhereList}).
 
 to_insert_vals(Doc) ->
     [{K1, V1} | T] = jsx:decode(Doc),
