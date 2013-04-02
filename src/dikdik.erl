@@ -51,8 +51,11 @@ find(_Id) ->
 
 %% Create new document with Id, assumes Id does not currently exist
 -spec create(Doc::jsx:json_term()) -> ok | {error, Error::binary()}.
-create(_Doc) ->
-    ok.
+create(Doc) ->
+    JSONTerms = jsx:decode(Doc),
+    Values = << <<K/binary, <<" => ">>/binary, (jsx:encode(V))/binary>> || {K, V}  <- JSONTerms >>,
+    dikdik_db:simple_query(<<"INSERT INTO dikdik (data) VALUES ('", Values/binary,"')">>).
+
 
 %% Update an already existing document at Id with new document
 -spec update(Id::binary(), Doc::jsx:json_term()) -> ok | {error, Error::binary()}.
