@@ -30,6 +30,7 @@
         ,lookup/2
         ,insert/2
         ,insert/3
+        ,replace/3
         ,update/3]).
 
 %%%===================================================================
@@ -88,7 +89,17 @@ insert(Table, Id, Doc)
     {{insert, _}, _} =
         dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES ('", Id/binary, "','", Values/binary,"')">>).
 
-%% Update an already existing document at Id with new document
+%% Replace an already existing document at Id with new document
+-spec replace(Table::binary(), Id::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
+replace(Table, Id, Doc)
+  when is_binary(Table),
+       is_binary(Id),
+       is_binary(Doc) ->
+    Values = to_insert_vals(Doc),
+    {{update, _}, _} =
+        dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=hstore('", Values/binary,"') WHERE id='", Id/binary, "'">>).
+
+%% Update an already existing document at Id with updates from partial document
 -spec update(Table::binary(), Id::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
 update(Table, Id, Doc)
   when is_binary(Table),
@@ -96,7 +107,7 @@ update(Table, Id, Doc)
        is_binary(Doc) ->
     Values = to_insert_vals(Doc),
     {{update, _}, _} =
-        dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=hstore('", Values/binary,"') WHERE id='", Id/binary, "'">>).
+        dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=data || ('", Values/binary,"') WHERE id='", Id/binary, "'">>).
 
 %%% Internal functions
 
