@@ -65,9 +65,8 @@ init(_) ->
     Overflow = list_to_integer(dikdik_app:config(db_max_overflow)),
     PoolSize = list_to_integer(dikdik_app:config(db_pool_size)),
 
-    {ok, {{one_for_one, 1000, 3600},
-          [{dikdik, {dikdik, start_link, []}, permanent, 2000, worker, [dikdik]}
-          ,poolboy:child_spec(dikdik_pool, [{name, {local, dikdik_pool}}
+    {ok, {{one_for_one, 1000, 3600}
+          ,[poolboy:child_spec(dikdik_pool, [{name, {local, dikdik_pool}}
                                            ,{worker_module, dikdik_db_worker}
                                            ,{size, PoolSize}
                                            ,{max_overflow, Overflow}], [
