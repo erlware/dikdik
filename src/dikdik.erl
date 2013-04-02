@@ -82,7 +82,8 @@ to_insert_vals(Doc) ->
        << <<", ", K/binary, " => \"", (encode_and_escape(V))/binary, "\"" >> || {K, V}  <- T >>/binary >>.
 
 encode_and_escape(B) ->
-    binary:replace(jsx:encode(B), <<"\"">>, <<"\\\"">>, [global]).
+    B2 = binary:replace(jsx:encode(B), <<"'">>, <<"''">>, [global]),
+    binary:replace(B2, <<"\"">>, <<"\\\"">>, [global]).
 
 array_to_erl_json(Array) ->
     array_to_erl_json(Array, []).
