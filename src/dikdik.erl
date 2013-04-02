@@ -24,9 +24,9 @@
 -module(dikdik).
 
 %% API
--export([all/1
+-export([new/1
+        ,all/1
         ,match/2
-        ,new/1
         ,lookup/2
         ,insert/2
         ,insert/3
@@ -35,6 +35,12 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+%% Create new table named Table
+-spec new(Table::binary()) -> ok | {error, Error::binary()}.
+new(Table) when is_binary(Table) ->
+    {{create, _}, _} =
+        dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>).
 
 %% Return all documents in Table
 -spec all(Table::binary()) -> [jsx:json_text()].
@@ -63,12 +69,6 @@ lookup(Table, Id)
         dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary,
                                    " WHERE id=$1">>, [Id]),
     jsx:encode(array_to_erl_json(Results)).
-
-%% Create new table named Table
--spec new(Table::binary()) -> ok | {error, Error::binary()}.
-new(Table) when is_binary(Table) ->
-    {{create, _}, _} =
-        dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>).
 
 %% Create new document with Name, assumes Name does not currently exist
 -spec insert(Table::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
