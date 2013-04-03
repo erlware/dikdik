@@ -41,7 +41,11 @@
 -spec new(Table::binary()) -> ok | {error, Error::binary()}.
 new(Table) when is_binary(Table) ->
     {{create, _}, _} =
-        dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>).
+        dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>),
+    {{create, _}, _} =
+        dikdik_db:simple_query(<<"CREATE INDEX gin_idx ON ", Table/binary, " USING GIN(data)">>),
+    {{create, _}, _} =
+        dikdik_db:simple_query(<<"CREATE INDEX h_idx ON ", Table/binary, " USING BTREE(data)">>).
 
 %% Return all documents in Table
 -spec all(Table::binary()) -> [jsx:json_text()].
