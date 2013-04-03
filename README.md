@@ -12,19 +12,13 @@ dikdik is a an Erlang and json interface for PostgreSQL hstore
 Quick Start
 -----------
 
-* Dependencies
+* Build
 
 ```bash
-$ make get-deps
+$ make 
 ```
 
-* Compile
-
-```bash
-$ make compile
-```
-
-* Test
+* Examples
 
 ```bash
 $ make shell
