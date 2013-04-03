@@ -1,6 +1,6 @@
 %% -*- erlang -*-
 {application, dikdik,
- [{description, "Erlang interface for Heroku's PostgreSQL"},
+ [{description, "An Erlang and json interface for PostgreSQL hstore"},
   {vsn, "0.0.1"},
   {registered,[dikdik_sup]},
   {applications, [kernel
