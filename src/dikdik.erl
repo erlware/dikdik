@@ -41,7 +41,11 @@
 -spec new(Table::binary()) -> ok | {error, Error::binary()}.
 new(Table) when is_binary(Table) ->
     {{create, _}, _} =
-        dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>).
+        dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>),
+    {{create, _}, _} =
+        dikdik_db:simple_query(<<"CREATE INDEX gin_idx ON ", Table/binary, " USING GIN(data)">>),
+    {{create, _}, _} =
+        dikdik_db:simple_query(<<"CREATE INDEX h_idx ON ", Table/binary, " USING BTREE(data)">>).
 
 %% Return all documents in Table
 -spec all(Table::binary()) -> [jsx:json_text()].
@@ -62,14 +66,17 @@ match(Table, Pairs)
     [jsx:encode(array_to_erl_json(X)) || {{array, X}} <- Results].
 
 %% Find document with given Id, assumes Id is unique
--spec lookup(Table::binary(), Id :: binary()) -> jsx:json_text().
+-spec lookup(Table::binary(), Id :: binary()) -> jsx:json_text() | {error, no_doc}.
 lookup(Table, Id)
   when is_binary(Table),
        is_binary(Id) ->
-    {{select, _Rows}, [{{array, Results}}]} =
-        dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary,
-                                   " WHERE id=$1">>, [Id]),
-    jsx:encode(array_to_erl_json(Results)).
+    case dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary,
+                                    " WHERE id=$1">>, [Id]) of
+        {{select, _Rows}, [{{array, Results}}]} ->            
+            jsx:encode(array_to_erl_json(Results));
+        {{select, 0}, []} ->
+            {error, no_doc}
+    end.    
 
 %% Create new document with Name, assumes Name does not currently exist
 -spec insert(Table::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
@@ -77,7 +84,7 @@ insert(Table, Doc)
   when is_binary(Table),
        is_binary(Doc) ->
     Values = to_insert_vals(Doc),
-    {{insert, _}, _} = 
+    {{insert, _, _}, _} = 
         dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES (uuid_generate_v4(), '",Values/binary,"')">>).
 
 -spec insert(Table::binary(), Id::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
@@ -86,7 +93,7 @@ insert(Table, Id, Doc)
        is_binary(Id),
        is_binary(Doc) ->
     Values = to_insert_vals(Doc),
-    {{insert, _}, _} =
+    {{insert, _, _}, _} =
         dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES ('", Id/binary, "','", Values/binary,"')">>).
 
 %% Replace an already existing document at Id with new document
