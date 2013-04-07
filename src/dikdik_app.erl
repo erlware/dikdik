@@ -42,8 +42,6 @@ start() ->
     application:set_env(lager, handlers, {handlers, [
                                                     {lager_console_backend, [info]}
                                                     ]}),
-
-    cache_os_envvars(),
     start_deps(dikdik, permanent).
 
 %% @private
@@ -58,6 +56,7 @@ start_deps(App, Type) ->
 
 %% @private
 start(_StartType, _StartArgs) ->
+    cache_os_envvars(),
     case dikdik_sup:start_link() of
         {ok, Pid} ->
             {ok, Pid};
