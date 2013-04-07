@@ -43,6 +43,8 @@ new(Table) when is_binary(Table) ->
     {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS hstore">>),
     {{create, _}, _} =
+        dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS uuid-ossp">>),
+    {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>),
     {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE INDEX ", Table/binary, "gin_idx ON ", Table/binary, " USING GIN(data)">>),
@@ -50,14 +52,14 @@ new(Table) when is_binary(Table) ->
         dikdik_db:simple_query(<<"CREATE INDEX ", Table/binary, "h_idx ON ", Table/binary, " USING BTREE(data)">>).
 
 %% Return all documents in Table
--spec all(Table::binary()) -> [jsx:json_text()].
+-spec all(Table::binary()) -> jsx:json_text().
 all(Table) when is_binary(Table) ->
     {{select, _Rows}, Results} =
         dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary>>, []),
-    [jsx:encode(array_to_erl_json(X)) || {{array, X}} <- Results].
+    jsx:encode([array_to_erl_json(X) || {{array, X}} <- Results]).
 
 %% Return all documents containing Key/Value pairs
--spec match(Table::binary(), Pairs::[{Key::binary(), Value::binary()}]) -> [jsx:json_text()].
+-spec match(Table::binary(), Pairs::[{Key::binary(), Value::binary()}]) -> jsx:json_text().
 match(Table, Pairs)
   when is_binary(Table),
        is_list(Pairs)->
@@ -65,7 +67,7 @@ match(Table, Pairs)
     {{select, _Rows}, Results} =
         dikdik_db:extended_query(<<"SELECT %% hstore(data) FROM ", Table/binary,
                                    WhereStr/binary>>, WhereList),
-    [jsx:encode(array_to_erl_json(X)) || {{array, X}} <- Results].
+    jsx:encode([array_to_erl_json(X) || {{array, X}} <- Results]).
 
 %% Find document with given Id, assumes Id is unique
 -spec lookup(Table::binary(), Id :: binary()) -> jsx:json_text() | {error, no_doc}.
