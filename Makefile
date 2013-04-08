@@ -40,8 +40,16 @@ compile: $(REBAR)
 doc: compile
 	- $(REBAR) skip_deps=true doc
 
-test: compile
+eunit: compile
 	$(REBAR) skip_deps=true eunit
+
+ct: compile clean-common-test-data
+	mkdir -p $(CURDIR) logs
+	ct_run -pa $(CURDIR)/ebin \
+	-pa $(CURDIR)/deps/*/ebin \
+	-logdir $(CURDIR)/logs \
+	-dir $(CURDIR)/test/ \
+	-suite basic_SUITE
 
 shell: compile
 # You often want *rebuilt* rebar tests to be available to the
@@ -51,17 +59,23 @@ shell: compile
 # runs eunit but tells make to ignore the result.
 	./bin/dikdik
 
-clean: $(REBAR)
+clean-common-test-data:
+# We have to do this because of the unique way we generate test
+# data. Without this rebar eunit gets very confused
+	- rm -rf $(CURDIR)/test/*_SUITE_data
+
+clean: clean-common-test-data
+	- rm -rf $(CURDIR)/test/*.beam
+	- rm -rf $(CURDIR)/logs
+	- rm -rf $(CURDIR)/ebin
 	$(REBAR) skip_deps=true clean
-	- rm -rf $(CURDIR)/doc/*.html
-	- rm -rf $(CURDIR)/doc/*.css
-	- rm -rf $(CURDIR)/doc/*.png
+
+distclean: clean
+	- rm -rf $(DEPS_PLT)
+	- rm -rvf $(CURDIR)/deps/*
 
 clean-deps: clean
 	rm -rvf $(CURDIR)/deps/*
 	rm -rf $(ERLWARE_COMMONS_PLT).$(ERL_VER)
-
-distclean: clean-deps
-	rm -rf $(CURDIR)/rebar
 
 rebuild: clean-deps get-deps all

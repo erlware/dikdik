@@ -69,16 +69,16 @@ init(_) ->
 
     {ok, {{one_for_one, 1000, 3600}
          ,[poolboy:child_spec(?POOL, [{name, {local, dikdik_pool}}
-                                           ,{worker_module, dikdik_db_worker}
-                                           ,{size, PoolSize}
-                                           ,{max_overflow, Overflow}], [
-                                                                       {host, Host}
-                                                                       ,{database, DBName}
-                                                                       ,{port, Port}
-                                                                       ,{user, Username}
-                                                                       ,{password, Password}
-                                                                       ,{ssl, true}
-                                                                       ])]}}.
+                                     ,{worker_module, dikdik_db_worker}
+                                     ,{size, PoolSize}
+                                     ,{max_overflow, Overflow}], [
+                                                                 {host, Host}
+                                                                 ,{database, DBName}
+                                                                 ,{port, Port}
+                                                                 ,{user, Username}
+                                                                 ,{password, Password}
+                                                                 ,{ssl, true}
+                                                                 ])]}}.
 
 %%%===================================================================
 %%% Internal functions
