@@ -27,8 +27,7 @@
 
 %% API
 -export([start_link/0,
-         start_child/1,
-         terminate_child/1]).
+         start_child/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -48,17 +47,11 @@ start_link() ->
 start_child(DB) ->
     supervisor:start_child(?SERVER, [DB]).
 
-terminate_child(PID) ->
-    dikdik:terminate(PID).
-
 %%%===================================================================
 %%% Supervisor callbacks
 %%%===================================================================
 
-
 %% @private
--spec init(list()) -> {ok, {SupFlags::any(), [ChildSpec::any()]}} |
-                       ignore | {error, Reason::any()}.
 init(_) ->
     Url = dikdik_app:config(db_url),
     {ok, {_Scheme, UserInfo, Host, Port, "/"++DBName, _Query}} = parse(Url),

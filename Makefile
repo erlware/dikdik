@@ -16,6 +16,8 @@ endif
 
 ERLWARE_COMMONS_PLT=$(CURDIR)/.erlware_commons_plt
 
+DEPS_PLT=$(CURDIR)/.depsolver_plt
+
 .PHONY: all compile doc clean test shell distclean pdf get-deps rebuild #dialyzer typer #fail on Travis.
 
 all: deps compile
@@ -50,6 +52,16 @@ ct: compile clean-common-test-data
 	-logdir $(CURDIR)/logs \
 	-dir $(CURDIR)/test/ \
 	-suite basic_SUITE
+
+$(DEPS_PLT):
+	@echo Building local erts plt at $(DEPS_PLT)
+	@echo
+	dialyzer --output_plt $(DEPS_PLT) --build_plt \
+	--apps erts kernel stdlib -r deps
+
+dialyzer: $(DEPS_PLT)
+	dialyzer --fullpath --plt $(DEPS_PLT) \
+	-Wrace_conditions -r ./ebin | fgrep -v -f ./dialyzer.ignore-warnings
 
 shell: compile
 # You often want *rebuilt* rebar tests to be available to the
