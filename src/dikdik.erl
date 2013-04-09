@@ -43,7 +43,7 @@ new(Table) when is_binary(Table) ->
     {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS hstore">>),
     {{create, _}, _} =
-        dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS uuid-ossp">>),
+        dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"">>),
     {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>),
     {{create, _}, _} =
@@ -84,10 +84,10 @@ lookup(Table, Id)
     end.
 
 %% Create new document with Name, assumes Name does not currently exist
--spec insert(Table::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
+-spec insert(Table::binary(), Doc::jsx:json_text() | list({binary(), term()})) -> ok | {error, Error::binary()}.
 insert(Table, Doc)
   when is_binary(Table),
-       is_binary(Doc) ->
+       is_binary(Doc) ; is_list(Doc) ->
     Values = to_insert_vals(Doc),
     {{insert, _, _}, _} =
         dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES (uuid_generate_v4(), '",Values/binary,"')">>),
