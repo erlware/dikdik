@@ -43,13 +43,14 @@ new(Table) when is_binary(Table) ->
     {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS hstore">>),
     {{create, _}, _} =
-        dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS uuid-ossp">>),
+        dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"">>),
     {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>),
     {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE INDEX ", Table/binary, "gin_idx ON ", Table/binary, " USING GIN(data)">>),
     {{create, _}, _} =
-        dikdik_db:simple_query(<<"CREATE INDEX ", Table/binary, "h_idx ON ", Table/binary, " USING BTREE(data)">>).
+        dikdik_db:simple_query(<<"CREATE INDEX ", Table/binary, "h_idx ON ", Table/binary, " USING BTREE(data)">>),
+    ok.
 
 %% Return all documents in Table
 -spec all(Table::binary()) -> jsx:json_text().
@@ -83,42 +84,49 @@ lookup(Table, Id)
     end.
 
 %% Create new document with Name, assumes Name does not currently exist
--spec insert(Table::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
+-spec insert(Table::binary(), Doc::jsx:json_text() | list({binary(), term()})) -> ok | {error, Error::binary()}.
 insert(Table, Doc)
   when is_binary(Table),
-       is_binary(Doc) ->
+       is_binary(Doc) ; is_list(Doc) ->
     Values = to_insert_vals(Doc),
     {{insert, _, _}, _} =
-        dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES (uuid_generate_v4(), '",Values/binary,"')">>).
+        dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES (uuid_generate_v4(), '",Values/binary,"')">>),
+    ok.
 
--spec insert(Table::binary(), Id::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
+-spec insert(Table::binary(), Id::binary(), Doc::jsx:json_text() | list({binary(), term()})) ->
+                    ok | {error, Error::binary()}.
 insert(Table, Id, Doc)
   when is_binary(Table),
        is_binary(Id),
-       is_binary(Doc) ->
+       is_binary(Doc) ; is_list(Doc) ->
     Values = to_insert_vals(Doc),
     {{insert, _, _}, _} =
-        dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES ('", Id/binary, "','", Values/binary,"')">>).
+        dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES ('", Id/binary, "','", Values/binary,"')">>),
+    ok.
 
 %% Replace an already existing document at Id with new document
--spec replace(Table::binary(), Id::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
+-spec replace(Table::binary(), Id::binary(), Doc::jsx:json_text() | list({binary(), term()})) ->
+                     ok | {error, Error::binary()}.
 replace(Table, Id, Doc)
   when is_binary(Table),
        is_binary(Id),
-       is_binary(Doc) ->
+       is_binary(Doc) ; is_list(Doc) ->
     Values = to_insert_vals(Doc),
     {{update, _}, _} =
-        dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=hstore('", Values/binary,"') WHERE id='", Id/binary, "'">>).
+        dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=hstore('", Values/binary,"') WHERE id='", Id/binary, "'">>),
+    ok.
 
 %% Update an already existing document at Id with updates from partial document
--spec update(Table::binary(), Id::binary(), Doc::jsx:json_text()) -> ok | {error, Error::binary()}.
+-spec update(Table::binary(), Id::binary(), Doc::jsx:json_text() | list({binary(), term()})) ->
+                    ok | {error, Error::binary()}.
 update(Table, Id, Doc)
   when is_binary(Table),
        is_binary(Id),
-       is_binary(Doc) ->
+       is_binary(Doc) ; is_list(Doc) ->
     Values = to_insert_vals(Doc),
     {{update, _}, _} =
-        dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=data || ('", Values/binary,"') WHERE id='", Id/binary, "'">>).
+        dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=data || ('", Values/binary,"') WHERE id='", Id/binary, "'">>),
+    ok.
 
 %%% Internal functions
 
@@ -139,8 +147,10 @@ build_where([{K, V} | T], {WhereStr, WhereList}) ->
     NewWhereList = [jsx:encode(V), K | WhereList],
     build_where(T, {NewWhereStr, NewWhereList}).
 
-to_insert_vals(Doc) ->
-    [{K1, V1} | T] = jsx:decode(Doc),
+-spec to_insert_vals(Doc::jsx:json_text() | list({binary(), term()})) -> binary().
+to_insert_vals(Doc) when is_binary(Doc) ->
+    to_insert_vals(jsx:decode(Doc));
+to_insert_vals([{K1, V1} | T]) ->
     << <<K1/binary, " => ", (encode_and_escape(V1))/binary>>/binary,
        << <<", ", K/binary, " => \"", (encode_and_escape(V))/binary, "\"" >> || {K, V}  <- T >>/binary >>.
 
