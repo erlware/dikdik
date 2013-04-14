@@ -12,13 +12,13 @@ dikdik is a an Erlang and json interface for PostgreSQL hstore
 Quick Start
 -----------
 
-* Build
+### Build
 
 ```bash
 $ make 
 ```
 
-* Examples
+### Examples
 
 ```bash
 $ make shell
@@ -36,7 +36,7 @@ Eshell V5.9.3.1  (abort with ^G)
 Testing
 -------
 
-* Edit Common Test Config
+### Edit Common Test Config
 
 ```bash
 $ cat test/ct.config
@@ -45,7 +45,7 @@ $ cat test/ct.config
 
 Uncomment this line and set the postgres url.
 
-* Run Tests
+### Run Tests
 
 ```bash
 $ make ct
