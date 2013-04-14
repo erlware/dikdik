@@ -32,3 +32,21 @@ Eshell V5.9.3.1  (abort with ^G)
 (dikdik@five9s-MacBook-Air-2.local)3> dikdik:find(<<"wutang">>, <<"doc1">>).
 <<"{\"type\":{\"test\":\"testmore\"},\"name\":5}">>
 ```
+
+Testing
+-------
+
+* Edit Common Test Config
+
+```bash
+$ cat test/ct.config
+%{database_url, "postgres://<username>:<password>@<host>:<port>/<database>"}.
+```
+
+Uncomment this line and set the postgres url.
+
+* Run Tests
+
+```bash
+$ make ct
+```
