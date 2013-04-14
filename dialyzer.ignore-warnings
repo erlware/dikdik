@@ -1,5 +1,4 @@
 Call to missing or unexported function lager:info
 Call to missing or unexported function lager:error
-Callback info about the poolboy_worker behaviour is not available
 The pattern {'value', {_, SchemeDefaults}} can never match the type 'false'
 The pattern {'value', {'ipv6_host_with_brackets', 'true'}} can never match the type 'false'
