@@ -99,7 +99,7 @@ insert(Table, Id, Doc)
   when is_binary(Table),
        is_binary(Id),
        is_binary(Doc) ; is_list(Doc) ->
-    Values = to_insert_vals(Doc),
+    Values = to_insert_vals(Doc),    
     {{insert, _, _}, _} =
         dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES ('", Id/binary, "','", Values/binary,"')">>),
     ok.
