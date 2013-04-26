@@ -112,7 +112,7 @@ replace(Table, Id, Doc)
        is_binary(Id),
        is_binary(Doc) ; is_list(Doc) ->
     Values = to_insert_vals(Doc),
-    {{update, _}, _} =
+    {{update, 1}, _} =
         dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=hstore('", Values/binary,"') WHERE id='", Id/binary, "'">>),
     ok.
 
@@ -124,7 +124,7 @@ update(Table, Id, Doc)
        is_binary(Id),
        is_binary(Doc) ; is_list(Doc) ->
     Values = to_insert_vals(Doc),
-    {{update, _}, _} =
+    {{update, 1}, _} =
         dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=data || ('", Values/binary,"') WHERE id='", Id/binary, "'">>),
     ok.
 
