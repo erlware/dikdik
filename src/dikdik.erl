@@ -25,6 +25,7 @@
 
 %% API
 -export([new/1
+        ,new/2
         ,all/1
         ,match/2
         ,lookup/2
@@ -40,16 +41,21 @@
 %% Create new table named Table
 -spec new(Table::binary()) -> ok | {error, Error::binary()}.
 new(Table) when is_binary(Table) ->
+    new(Table, []).
+
+new(Table, Columns) when is_binary(Table) ->
     {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS hstore">>),
     {{create, _}, _} =
         dikdik_db:simple_query(<<"CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"">>),
     {{create, _}, _} =
-        dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary, " (id varchar(256) PRIMARY KEY, data hstore)">>),
+        dikdik_db:simple_query(<<"CREATE TABLE ", Table/binary
+                                 ," (id varchar(256), data hstore"
+                                 ,(<< <<", ", Column/binary>> || Column <- Columns >>)/binary, ")">>),
     {{create, _}, _} =
-        dikdik_db:simple_query(<<"CREATE INDEX ", Table/binary, "gin_idx ON ", Table/binary, " USING GIN(data)">>),
+        dikdik_db:simple_query(<<"CREATE INDEX ", Table/binary, "_gin_idx ON ", Table/binary, " USING GIN(data)">>),
     {{create, _}, _} =
-        dikdik_db:simple_query(<<"CREATE INDEX ", Table/binary, "h_idx ON ", Table/binary, " USING BTREE(data)">>),
+        dikdik_db:simple_query(<<"CREATE INDEX ", Table/binary, "_h_idx ON ", Table/binary, " USING BTREE(data)">>),
     ok.
 
 %% Return all documents in Table
@@ -98,8 +104,8 @@ insert(Table, Doc)
 insert(Table, Id, Doc)
   when is_binary(Table),
        is_binary(Id),
-       is_binary(Doc) ; is_list(Doc) ->
-    Values = to_insert_vals(Doc),    
+     is_binary(Doc) ; is_list(Doc) ->
+    Values = to_insert_vals(Doc),
     {{insert, _, _}, _} =
         dikdik_db:simple_query(<<"INSERT INTO ", Table/binary," (id, data) VALUES ('", Id/binary, "','", Values/binary,"')">>),
     ok.
@@ -124,7 +130,7 @@ update(Table, Id, Doc)
        is_binary(Id),
        is_binary(Doc) ; is_list(Doc) ->
     Values = to_insert_vals(Doc),
-    {{update, 1}, _} =
+    {{update, _}, _} =
         dikdik_db:simple_query(<<"UPDATE ", Table/binary," SET data=data || ('", Values/binary,"') WHERE id='", Id/binary, "'">>),
     ok.
 
