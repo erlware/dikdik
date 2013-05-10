@@ -91,4 +91,4 @@ clean-deps: clean
 	rm -rvf $(CURDIR)/deps/*
 	rm -rf $(ERLWARE_COMMONS_PLT).$(ERL_VER)
 
-rebuild: clean-deps get-deps all
+rebuild: clean-deps get-deps all ct
