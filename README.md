@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tsloughter/dikdik.png)](https://travis-ci.org/tsloughter/dikdik)
+
 ![Dikdik](https://github.com/tsloughter/dikdik/raw/master/dikdik.jpg)
 
 README

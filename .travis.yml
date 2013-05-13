@@ -1,0 +1,9 @@
+language: erlang
+otp_release:
+  - R16B
+script: "make rebuild"
+branches:
+  only:
+    - master
+env:
+  - DATABASE_URL=$(curl http://api.postgression.com)
