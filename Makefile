@@ -48,7 +48,6 @@ eunit: compile
 ct: compile clean-common-test-data
 	mkdir -p $(CURDIR) logs
 	ct_run -pa $(CURDIR)/ebin \
-	-config $(CURDIR)/test/ct.config \
 	-pa $(CURDIR)/deps/*/ebin \
 	-logdir $(CURDIR)/logs \
 	-dir $(CURDIR)/test/ \
