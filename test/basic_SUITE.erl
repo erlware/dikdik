@@ -15,7 +15,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 suite() ->
-    [{require, database_url}].
+    [].
 
 all() ->
     [{group, database_access}].
@@ -26,7 +26,6 @@ groups() ->
                            ,all_match]}].
 
 init_per_group(database_access, Config) ->
-    os:putenv("DATABASE_URL", ct:get_config(database_url)),
     os:putenv("DB_POOL_SIZE", "1"),
     os:putenv("DB_MAX_OVERFLOW", "1"),
     dikdik_app:start(),
@@ -52,7 +51,7 @@ end_per_testcase(all_match, Config) ->
     ok;
 end_per_testcase(_, _Config) ->
     ok.
-    
+
 create(Config) ->
     TableName = ?config(table_name, Config),
     ok = dikdik:new(TableName).
@@ -76,7 +75,7 @@ insert_replace_update(Config) ->
     ?assert(compare_json(Doc3, dikdik:lookup(TableName, Id2))),
 
     ok = dikdik:update(TableName, Id1, <<"{\"update_me_key\":\"updated\"}">>),
-    
+
     ?assert(compare_json(Doc4, dikdik:lookup(TableName, Id1))).
 
 all_match(Config) ->
