@@ -157,7 +157,7 @@ build_where([{K, V} | T], {WhereStr, WhereList}) ->
 to_insert_vals(Doc) when is_binary(Doc) ->
     to_insert_vals(jsx:decode(Doc));
 to_insert_vals([{K1, V1} | T]) ->
-    << <<K1/binary, " => ", (encode_and_escape(V1))/binary>>/binary,
+    << <<K1/binary, " => \"", (encode_and_escape(V1))/binary, "\"">>/binary,
        << <<", ", K/binary, " => \"", (encode_and_escape(V))/binary, "\"" >> || {K, V}  <- T >>/binary >>.
 
 encode_and_escape(B) ->
