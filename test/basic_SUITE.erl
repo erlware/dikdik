@@ -9,7 +9,8 @@
         ,end_per_testcase/2]).
 -export([create/1
         ,insert_replace_update/1
-        ,all_match/1]).
+        ,all_match/1
+        ,values_with_space/1]).
 
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
@@ -23,7 +24,8 @@ all() ->
 groups() ->
     [{database_access, [], [create
                            ,insert_replace_update
-                           ,all_match]}].
+                           ,all_match
+                           ,values_with_space]}].
 
 init_per_group(database_access, Config) ->
     os:putenv("DB_POOL_SIZE", "1"),
@@ -89,6 +91,18 @@ all_match(Config) ->
 
     ?assert(compare_json(<<"[", Doc1/binary, ",", Doc2/binary, "]">>, dikdik:all(TableName))),
     ?assert(compare_json(<<"[", Doc1/binary, "]">>, dikdik:match(TableName, [{<<"test_key_2">>, <<"test_value_2">>}]))).
+
+values_with_space(Config) ->
+    TableName = ?config(table_name, Config),
+
+    Doc1 = <<"{\"test_key_1\":\"test value\",\"test_key_2\":\"test value 2\"}">>,
+
+    Id1 = create_random_name("id_"),
+    Id2 = create_random_name("id_"),
+
+    ok = dikdik:insert(TableName, Id1, Doc1),
+
+    ?assert(compare_json(Doc1, dikdik:lookup(TableName, Id1))).
 
 %%%===================================================================
 %%% Helper Functions
